@@ -1,5 +1,5 @@
 {
-  "buildCommand": "flutter build web --release --dart-define=BASE_URL=https://gara-backend.onrender.com/api",
+  "buildCommand": "flutter build web --release --dart-define=BASE_URL=https://jethrona.pythonanywhere.com/api",
   "outputDirectory": "build/web",
   "devCommand": "flutter run -d chrome",
   "rewrites": [{ "source": "/:path*", "destination": "/index.html" }]

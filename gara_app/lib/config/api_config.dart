@@ -2,7 +2,7 @@ class ApiConfig {
   // Override with --dart-define=BASE_URL=https://your-api.com/api for production builds
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://10.195.221.137:8000/api',
+    defaultValue: 'https://jethrona.pythonanywhere.com/api',
   );
   static const String registerPatient = '/auth/register/patient/';
   static const String registerDoctor = '/auth/register/doctor/';
