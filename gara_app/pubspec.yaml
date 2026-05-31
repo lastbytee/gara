@@ -1,0 +1,33 @@
+name: gara_app
+description: Gara - Clinical Suite for Independent Private Practice
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  provider: ^6.1.0
+  shared_preferences: ^2.2.0
+  image_picker: ^1.0.0
+  record: ^6.2.1
+  audioplayers: ^6.0.0
+  intl: 0.20.2
+  flutter_localizations:
+    sdk: flutter
+  path_provider: ^2.1.0
+  google_sign_in: ^7.2.0
+  share_plus: ^13.1.0
+  encrypt: ^5.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: false

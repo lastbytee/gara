@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: gara-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn gara.wsgi:application --workers 2 --worker-class sync --timeout 120 --access-logfile -
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "http://localhost:8000,https://gara-app.vercel.app"
+      - key: CORS_ALLOW_ALL_ORIGINS
+        value: "False"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://gara-backend.onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gara-db
+          property: connectionString
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: DOCTOR_REGISTRATION_TOKEN
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MOMO_PHONE_NUMBER
+        sync: false
+      - key: MOMO_NETWORK
+        sync: false
+
+databases:
+  - name: gara-db
+    databaseName: gara
+    plan: free
+    postgresMajorVersion: 16
