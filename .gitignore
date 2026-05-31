@@ -7,6 +7,7 @@ env/
 *.env
 .env.production
 backend_requirements.txt
+backend/render.yaml
 
 # Django
 backend/media/
