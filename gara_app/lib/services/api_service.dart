@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 
 class ApiService {
+  static const _timeout = Duration(seconds: 30);
   static String? _accessToken;
   static String? _refreshToken;
 
@@ -40,8 +41,8 @@ class ApiService {
   static Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
   static Future<Map<String, dynamic>> get(String path) async {
-    final response = await http.get(_uri(path), headers: _headers);
-    return _handle(response);
+    final response = await http.get(_uri(path), headers: _headers).timeout(_timeout);
+    return _handle(response, 'GET');
   }
 
   static Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? body}) async {
@@ -49,8 +50,8 @@ class ApiService {
       _uri(path),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
-    );
-    return _handle(response);
+    ).timeout(_timeout);
+    return _handle(response, 'POST', body: body);
   }
 
   static Future<Map<String, dynamic>> patch(String path, {Map<String, dynamic>? body}) async {
@@ -58,8 +59,8 @@ class ApiService {
       _uri(path),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
-    );
-    return _handle(response);
+    ).timeout(_timeout);
+    return _handle(response, 'PATCH', body: body);
   }
 
   static Future<Map<String, dynamic>> uploadBytes(
@@ -77,12 +78,16 @@ class ApiService {
     if (fields != null) {
       request.fields.addAll(fields);
     }
-    final streamedResponse = await request.send();
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
     final response = await http.Response.fromStream(streamedResponse);
-    return _handle(response);
+    return _handle(response, 'POST', body: fields);
   }
 
-  static Future<Map<String, dynamic>> _handle(http.Response response) async {
+  static Future<Map<String, dynamic>> _handle(
+    http.Response response,
+    String method, {
+    Map<String, dynamic>? body,
+  }) async {
     final decoded = response.body.isNotEmpty
         ? jsonDecode(response.body)
         : <String, dynamic>{};
@@ -99,10 +104,16 @@ class ApiService {
     if (response.statusCode == 401 && _refreshToken != null) {
       final refreshed = await _tryRefresh();
       if (refreshed) {
-        final retryResponse = await http.get(
-          Uri.parse(response.request?.url.toString() ?? ''),
-          headers: _headers,
-        );
+        final url = response.request?.url.toString() ?? '';
+        http.Response retryResponse;
+        final retryHeaders = _headers;
+        if (method == 'GET') {
+          retryResponse = await http.get(Uri.parse(url), headers: retryHeaders).timeout(_timeout);
+        } else if (method == 'PATCH') {
+          retryResponse = await http.patch(Uri.parse(url), headers: retryHeaders, body: body != null ? jsonEncode(body) : null).timeout(_timeout);
+        } else {
+          retryResponse = await http.post(Uri.parse(url), headers: retryHeaders, body: body != null ? jsonEncode(body) : null).timeout(_timeout);
+        }
         final retryDecoded = retryResponse.body.isNotEmpty
             ? jsonDecode(retryResponse.body)
             : <String, dynamic>{};
@@ -125,12 +136,13 @@ class ApiService {
         _uri(ApiConfig.refresh),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refresh': _refreshToken}),
-      );
+      ).timeout(_timeout);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await saveTokens(data['access'], _refreshToken!);
         return true;
       }
+      clearTokens();
       return false;
     } catch (_) {
       return false;
