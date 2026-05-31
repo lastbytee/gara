@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key-change-in-producti
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,10.195.221.137,.pythonanywhere.com,.onrender.com").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,10.195.221.137,.pythonanywhere.com,.onrender.com,.vercel.app").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -125,7 +125,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:57758"
+    "CORS_ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:57758,https://gara-ew1z4rwbu-novblenas-projects.vercel.app"
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True") == "True"

@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd gara_app && flutter build web --release --dart-define=BASE_URL=https://jethrona.pythonanywhere.com/api",
+  "outputDirectory": "gara_app/build/web",
+  "devCommand": "cd gara_app && flutter run -d chrome",
+  "rewrites": [{ "source": "/:path*", "destination": "/index.html" }]
+}
