@@ -74,13 +74,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "gara.wsgi.application"
-DATABASE_URL = os.getenv("DATABASE_URL")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "123admin") 
-DB_NAME = os.getenv("DB_NAME", "lastdb")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
 import re
+DATABASE_URL = os.getenv("DATABASE_URL")
+DB_NAME = os.getenv("DB_NAME")
 if DATABASE_URL:
     m = re.match(r"postgres(?:ql)?://(?P<u>[^:]+):(?P<p>[^@]+)@(?P<h>[^:]+)(?::(?P<o>\d+))?/(?P<n>[^?]+)", DATABASE_URL)
     if m:
@@ -92,7 +88,6 @@ if DATABASE_URL:
                 "PASSWORD": m.group("p"),
                 "HOST": m.group("h"),
                 "PORT": m.group("o") or "5432",
-                "OPTIONS": {"sslmode": "disable"}  # SSL disabled for URL string
             }
         }
     else:
@@ -102,11 +97,10 @@ elif DB_NAME:
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": DB_NAME,
-            "USER": DB_USER,
-            "PASSWORD": DB_PASSWORD,
-            "HOST": DB_HOST,
-            "PORT": DB_PORT,
-            "OPTIONS": {"sslmode": "disable"}  # 👈 Added SSL disable to the variable fallback block too
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
 else:
