@@ -14,6 +14,7 @@ class ApiConfig {
   static const String createIntake = '/intake/create/';
   static const String myIntakes = '/intake/my/';
   static const String allIntakes = '/intake/all/';
+  static String intakeDoctorInfo(int id) => '/intake/$id/doctor-info/';
   static const String createPayment = '/payments/create/';
   static const String myPayments = '/payments/my/';
   static const String pendingPayments = '/payments/pending/';

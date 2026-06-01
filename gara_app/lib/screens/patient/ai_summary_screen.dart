@@ -78,7 +78,7 @@ class AiSummaryScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const PaymentScreen()),
+                MaterialPageRoute(builder: (_) => PaymentScreen(intakeId: intake.id)),
               ),
               icon: const Icon(Icons.payment),
               label: Text(LocalizationService.payNow),

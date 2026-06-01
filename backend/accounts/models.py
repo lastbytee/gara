@@ -40,6 +40,8 @@ class DoctorProfile(models.Model):
     profile_picture = models.ImageField(upload_to="profiles/", blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+    momo_phone_number = models.CharField(max_length=20, blank=True, null=True)
+    momo_network = models.CharField(max_length=10, blank=True, null=True, default="MTN")
 
     def __str__(self):
         return f"Dr. {self.user.get_full_name() or self.user.username}"

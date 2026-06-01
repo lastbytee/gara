@@ -16,6 +16,8 @@ class UserModel {
   final String? licenseNumber;
   final String? specialization;
   final String? bio;
+  final String? momoPhoneNumber;
+  final String? momoNetwork;
 
   UserModel({
     required this.id,
@@ -33,6 +35,8 @@ class UserModel {
     this.licenseNumber,
     this.specialization,
     this.bio,
+    this.momoPhoneNumber,
+    this.momoNetwork,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +56,8 @@ class UserModel {
       licenseNumber: json['license_number'],
       specialization: json['specialization'],
       bio: json['bio'],
+      momoPhoneNumber: json['momo_phone_number'],
+      momoNetwork: json['momo_network'],
     );
   }
 

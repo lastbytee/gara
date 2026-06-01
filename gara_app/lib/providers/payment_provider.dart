@@ -23,22 +23,25 @@ class PaymentProvider extends ChangeNotifier {
     required double amount,
     required Uint8List screenshotBytes,
     String? senderPhone,
+    int? intakeId,
   }) async {
     _loading = true;
     _error = null;
     notifyListeners();
 
     try {
+      final fields = <String, String>{
+        'amount': amount.toString(),
+        if (senderPhone != null && senderPhone.isNotEmpty)
+          'sender_phone': senderPhone,
+        if (intakeId != null) 'intake_id': intakeId.toString(),
+      };
       final data = await ApiService.uploadBytes(
         ApiConfig.createPayment,
         bytes: screenshotBytes,
         fieldName: 'screenshot',
         filename: 'payment.jpg',
-        fields: {
-          'amount': amount.toString(),
-          if (senderPhone != null && senderPhone.isNotEmpty)
-            'sender_phone': senderPhone,
-        },
+        fields: fields,
       );
       _myPayments.insert(0, PaymentModel.fromJson(data));
       _loading = false;

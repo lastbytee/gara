@@ -80,6 +80,8 @@ def _serialize_profile(user):
         data["profile_picture"] = (profile.profile_picture.url if profile and profile.profile_picture else None)
         data["address"] = getattr(profile, "address", None)
         data["bio"] = getattr(profile, "bio", None)
+        data["momo_phone_number"] = getattr(profile, "momo_phone_number", None)
+        data["momo_network"] = getattr(profile, "momo_network", None)
     return data
 
 
@@ -104,7 +106,7 @@ def update_profile(request):
                 setattr(profile, f, request.data[f])
     elif user.role == "DOCTOR":
         profile, _ = DoctorProfile.objects.get_or_create(user=user)
-        for f in ["license_number", "specialization", "address", "bio"]:
+        for f in ["license_number", "specialization", "address", "bio", "momo_phone_number", "momo_network"]:
             if f in request.data:
                 setattr(profile, f, request.data[f])
 

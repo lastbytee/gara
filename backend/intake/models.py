@@ -26,6 +26,13 @@ class ClinicalIntake(models.Model):
         on_delete=models.CASCADE,
         related_name="intakes",
     )
+    assigned_doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_intakes",
+    )
     sex = models.CharField(max_length=10, choices=Sex.choices)
     severity = models.CharField(max_length=10, choices=Severity.choices)
     duration = models.CharField(max_length=10, choices=Duration.choices)

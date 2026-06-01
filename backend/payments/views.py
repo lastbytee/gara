@@ -13,6 +13,7 @@ from .serializers import (
 )
 from accounts.permissions import IsPatient, IsDoctor
 from notifications.models import Notification
+from intake.models import ClinicalIntake
 
 User = get_user_model()
 
@@ -25,17 +26,43 @@ def create_payment(request):
     )
     if serializer.is_valid():
         payment = serializer.save()
-        doctors = User.objects.filter(role="DOCTOR")
-        for doctor in doctors:
+
+        intake_id = request.data.get("intake_id")
+        assigned_doctor = None
+        if intake_id:
+            try:
+                intake = ClinicalIntake.objects.get(id=intake_id, patient=request.user)
+                assigned_doctor = intake.assigned_doctor
+            except ClinicalIntake.DoesNotExist:
+                pass
+
+        if assigned_doctor:
             Notification.objects.create(
-                recipient=doctor,
+                recipient=assigned_doctor,
                 title=f"New payment from {payment.patient.get_full_name() or payment.patient.username}",
                 message=f"Payment of {payment.amount} RWF submitted. Tap to review.",
                 type=Notification.Type.PAYMENT_SUBMITTED,
                 related_id=payment.id,
             )
+        else:
+            doctors = User.objects.filter(role="DOCTOR")
+            for doctor in doctors:
+                Notification.objects.create(
+                    recipient=doctor,
+                    title=f"New payment from {payment.patient.get_full_name() or payment.patient.username}",
+                    message=f"Payment of {payment.amount} RWF submitted. Tap to review.",
+                    type=Notification.Type.PAYMENT_SUBMITTED,
+                    related_id=payment.id,
+                )
+
         out = PaymentSerializer(payment)
-        return Response(out.data, status=status.HTTP_201_CREATED)
+        data = out.data
+        if assigned_doctor:
+            profile = getattr(assigned_doctor, "doctor_profile", None)
+            data["doctor_name"] = assigned_doctor.get_full_name() or assigned_doctor.username
+            data["doctor_momo_phone"] = getattr(profile, "momo_phone_number", None) if profile else None
+            data["doctor_momo_network"] = getattr(profile, "momo_network", None) if profile else None
+        return Response(data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from .models import ClinicalIntake
 from .serializers import ClinicalIntakeSerializer, ClinicalIntakeCreateSerializer
 from accounts.permissions import IsPatient, IsDoctor
+from accounts.models import DoctorProfile
 
 
 @api_view(["POST"])
@@ -61,3 +62,34 @@ def all_intakes(request):
     intakes.sort(key=lambda i: priority_order.get(get_triage_priority(i.severity, i.symptoms_description), 99))
     serializer = ClinicalIntakeSerializer(intakes, many=True)
     return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsDoctor])
+def assign_doctor(request, intake_id):
+    try:
+        intake = ClinicalIntake.objects.get(id=intake_id)
+    except ClinicalIntake.DoesNotExist:
+        return Response({"detail": "Intake not found."}, status=404)
+    intake.assigned_doctor = request.user
+    intake.save()
+    serializer = ClinicalIntakeSerializer(intake)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def intake_doctor_info(request, intake_id):
+    try:
+        intake = ClinicalIntake.objects.get(id=intake_id)
+    except ClinicalIntake.DoesNotExist:
+        return Response({"detail": "Intake not found."}, status=404)
+    doctor = intake.assigned_doctor
+    if not doctor:
+        return Response({"doctor_name": None, "momo_phone_number": None, "momo_network": None})
+    profile = getattr(doctor, "doctor_profile", None)
+    return Response({
+        "doctor_name": doctor.get_full_name() or doctor.username,
+        "momo_phone_number": getattr(profile, "momo_phone_number", None) if profile else None,
+        "momo_network": getattr(profile, "momo_network", None) if profile else None,
+    })

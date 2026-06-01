@@ -9,6 +9,9 @@ class PaymentModel {
   final String? doctorNotes;
   final String createdAt;
   final String? approvedAt;
+  final String? doctorName;
+  final String? doctorMomoPhone;
+  final String? doctorMomoNetwork;
 
   PaymentModel({
     required this.id,
@@ -21,6 +24,9 @@ class PaymentModel {
     this.doctorNotes,
     required this.createdAt,
     this.approvedAt,
+    this.doctorName,
+    this.doctorMomoPhone,
+    this.doctorMomoNetwork,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +41,9 @@ class PaymentModel {
       doctorNotes: json['doctor_notes'],
       createdAt: json['created_at'] ?? '',
       approvedAt: json['approved_at'],
+      doctorName: json['doctor_name'],
+      doctorMomoPhone: json['doctor_momo_phone'],
+      doctorMomoNetwork: json['doctor_momo_network'],
     );
   }
 

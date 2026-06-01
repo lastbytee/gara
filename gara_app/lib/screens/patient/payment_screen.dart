@@ -4,12 +4,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
+import '../../config/api_config.dart';
 import '../../providers/payment_provider.dart';
+import '../../services/api_service.dart';
 import '../../services/localization_service.dart';
 import '../../widgets/loading_button.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final int? intakeId;
+
+  const PaymentScreen({super.key, this.intakeId});
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -20,6 +24,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final _amountCtl = TextEditingController(text: Constants.consultationFee.toString());
   final _phoneCtl = TextEditingController();
   final _picker = ImagePicker();
+  String? _doctorName;
+  String? _doctorMomo;
+  String? _doctorNetwork;
+  bool _loadingDoctor = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDoctorInfo();
+  }
+
+  Future<void> _fetchDoctorInfo() async {
+    if (widget.intakeId == null) {
+      setState(() => _loadingDoctor = false);
+      return;
+    }
+    try {
+      final data = await ApiService.get(ApiConfig.intakeDoctorInfo(widget.intakeId!));
+      setState(() {
+        _doctorName = data['doctor_name'];
+        _doctorMomo = data['momo_phone_number'];
+        _doctorNetwork = data['momo_network'];
+        _loadingDoctor = false;
+      });
+    } catch (_) {
+      setState(() => _loadingDoctor = false);
+    }
+  }
 
   Future<void> _pickScreenshot() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
@@ -57,6 +89,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       amount: amount,
       screenshotBytes: _screenshotBytes!,
       senderPhone: _phoneCtl.text.trim(),
+      intakeId: widget.intakeId,
     );
 
     if (success && mounted) {
@@ -79,6 +112,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final showDoctorInfo = _doctorName != null && _doctorMomo != null && _doctorMomo!.isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(title: Text(LocalizationService.payment)),
       body: SingleChildScrollView(
@@ -90,35 +125,63 @@ class _PaymentScreenState extends State<PaymentScreen> {
               color: GaraTheme.primaryBlue.withAlpha(10),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const Icon(Icons.info_outline, color: GaraTheme.primaryBlue, size: 32),
-                    const SizedBox(height: 8),
-                    Text(
-                      LocalizationService.sendPaymentTo,
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      Constants.momoNumber,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: GaraTheme.primaryBlue,
+                child: showDoctorInfo
+                    ? Column(
+                        children: [
+                          const Icon(Icons.person, color: GaraTheme.primaryBlue, size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            LocalizationService.translate(en: 'Send payment to Dr. $_doctorName', rw: 'Ohereza ubwishyu kwa Dr. $_doctorName'),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _doctorMomo!,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: GaraTheme.primaryBlue,
+                            ),
+                          ),
+                          if (_doctorNetwork != null && _doctorNetwork!.isNotEmpty)
+                            Text('Network: $_doctorNetwork'),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          const Icon(Icons.info_outline, color: GaraTheme.primaryBlue, size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            LocalizationService.sendPaymentTo,
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            Constants.momoNumber,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: GaraTheme.primaryBlue,
+                            ),
+                          ),
+                          Text('Network: ${Constants.momoNetwork}'),
+                        ],
                       ),
-                    ),
-                    Text('Network: ${Constants.momoNetwork}'),
-                  ],
-                ),
               ),
             ),
+            if (_loadingDoctor)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
+              ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _amountCtl,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: LocalizationService.amount,
-                prefixIcon: Icon(Icons.monetization_on),
+                prefixIcon: const Icon(Icons.monetization_on),
               ),
             ),
             const SizedBox(height: 16),
@@ -128,7 +191,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               decoration: InputDecoration(
                 labelText: LocalizationService.senderPhone,
                 hintText: LocalizationService.translate(en: 'If paid from a different number', rw: 'Niba yishyuye aturutse kuri numero itandukanye'),
-                prefixIcon: Icon(Icons.phone),
+                prefixIcon: const Icon(Icons.phone),
               ),
             ),
             const SizedBox(height: 24),

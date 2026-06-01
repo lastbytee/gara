@@ -56,12 +56,15 @@ class RegisterDoctorSerializer(serializers.ModelSerializer):
     registration_token = serializers.CharField(write_only=True)
     license_number = serializers.CharField(required=False, allow_blank=True)
     specialization = serializers.CharField(required=False, allow_blank=True)
+    momo_phone_number = serializers.CharField(required=False, allow_blank=True)
+    momo_network = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
         fields = [
             "username", "email", "password", "confirm_password", "first_name", "last_name",
             "phone_number", "registration_token", "license_number", "specialization",
+            "momo_phone_number", "momo_network",
         ]
 
     def validate_username(self, value):
@@ -88,13 +91,16 @@ class RegisterDoctorSerializer(serializers.ModelSerializer):
         validated_data.pop("registration_token")
         license_number = validated_data.pop("license_number", "")
         specialization = validated_data.pop("specialization", "")
+        momo_phone_number = validated_data.pop("momo_phone_number", "")
+        momo_network = validated_data.pop("momo_network", "")
         password = validated_data.pop("password")
         user = User(**validated_data)
         user.role = User.Role.DOCTOR
         user.set_password(password)
         user.save()
         DoctorProfile.objects.create(
-            user=user, license_number=license_number, specialization=specialization
+            user=user, license_number=license_number, specialization=specialization,
+            momo_phone_number=momo_phone_number, momo_network=momo_network,
         )
         return user
 
