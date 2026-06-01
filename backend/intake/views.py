@@ -55,5 +55,9 @@ def all_intakes(request):
     if status_filter:
         qs = qs.filter(is_submitted=(status_filter == "submitted"))
     qs = qs.order_by("-created_at")
-    serializer = ClinicalIntakeSerializer(qs, many=True)
+    intakes = list(qs)
+    from .ai_service import get_triage_priority
+    priority_order = {"emergency": 0, "high": 1, "medium": 2, "low": 3}
+    intakes.sort(key=lambda i: priority_order.get(get_triage_priority(i.severity, i.symptoms_description), 99))
+    serializer = ClinicalIntakeSerializer(intakes, many=True)
     return Response(serializer.data)

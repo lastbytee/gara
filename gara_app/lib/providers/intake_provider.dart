@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/intake.dart';
 import '../services/api_service.dart';
@@ -25,24 +26,37 @@ class IntakeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('IntakeProvider: POST to ${ApiConfig.createIntake}');
       final data = await ApiService.post(ApiConfig.createIntake, body: {
         'sex': sex,
         'severity': severity,
         'duration': duration,
         'symptoms_description': symptomsDescription,
       });
+      debugPrint('IntakeProvider: success — $data');
       _currentIntake = IntakeModel.fromJson(data);
       _intakes.insert(0, _currentIntake!);
       _loading = false;
       notifyListeners();
       return true;
     } on ApiException catch (e) {
+      debugPrint('IntakeProvider: ApiException — ${e.message}');
       _error = e.message;
       _loading = false;
       notifyListeners();
       return false;
     } catch (e) {
-      _error = 'Connection error.';
+      debugPrint('IntakeProvider: Exception — $e');
+      final msg = e.toString();
+      if (msg.contains('TimeoutException')) {
+        _error = 'Server took too long to respond. Try again.';
+      } else if (msg.contains('SocketException') || msg.contains('HandshakeException')) {
+        _error = 'Cannot reach server. Check your connection.';
+      } else if (msg.contains('FormatException')) {
+        _error = 'Invalid server response. Check backend logs.';
+      } else {
+        _error = 'Connection error: ${e.runtimeType}';
+      }
       _loading = false;
       notifyListeners();
       return false;

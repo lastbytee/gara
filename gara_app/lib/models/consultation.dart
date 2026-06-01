@@ -80,4 +80,16 @@ class MessageModel {
   bool get isText => messageType == 'TEXT';
   bool get isAudio => messageType == 'AUDIO';
   bool get isImage => messageType == 'IMAGE';
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'consultation': consultation,
+    'sender': sender,
+    'sender_name': senderName,
+    'message_type': messageType,
+    'text_content': textContent,
+    'audio_file': audioFile,
+    'image_file': imageFile,
+    'created_at': createdAt,
+  };
 }

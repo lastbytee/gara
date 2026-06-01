@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../config/api_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/localization_service.dart';
+import '../../services/google_sign_in/gis.dart';
 import '../../widgets/language_toggle.dart';
 import '../../widgets/loading_button.dart';
 import 'register_screen.dart';
@@ -69,27 +70,26 @@ class _LoginScreenState extends State<LoginScreen> {
   static bool _googleInitialized = false;
 
   Future<void> _googleSignIn() async {
-    if (kIsWeb) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In is not available on web. Use Login or Register instead.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      return;
-    }
-
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn.instance;
-      if (!_googleInitialized) {
-        await googleSignIn.initialize(clientId: ApiConfig.googleClientId, serverClientId: ApiConfig.googleClientId);
-        _googleInitialized = true;
+      String? idToken;
+
+      if (kIsWeb) {
+        idToken = await WebGoogleSignIn.signIn();
+      } else {
+        final GoogleSignIn googleSignIn = GoogleSignIn.instance;
+        if (!_googleInitialized && ApiConfig.googleClientId.isNotEmpty) {
+          await googleSignIn.initialize(
+            clientId: ApiConfig.googleClientId,
+            serverClientId: ApiConfig.googleClientId,
+          );
+          _googleInitialized = true;
+        }
+        final account = await googleSignIn.authenticate();
+        final authentication = account.authentication;
+        idToken = authentication.idToken;
       }
-      final account = await googleSignIn.authenticate();
-      final idToken = account.authentication.idToken;
-      if (idToken == null) return;
+
+      if (idToken == null || idToken.isEmpty) return;
 
       final auth = context.read<AuthProvider>();
       final success = await auth.googleSignIn(idToken, preferredLanguage: _lang);
@@ -114,18 +114,22 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         final err = e.toString();
         String msg;
-        if (err.contains('init() has already been called')) {
-          _googleInitialized = true;
-          return;
-        } else if (err.contains('client_id') || err.contains('google-services')) {
-          msg = 'Google Sign-In not configured. Register app in Google Cloud Console.';
-        } else if (err.contains('10:') || err.contains('sign_in_failed') || err.contains('SIGN_IN_FAILED')) {
-          msg = 'Google Sign-In failed. Add your SHA-1 to Google Cloud Console:\n8D:C2:85:A5:25:20:47:DF:8B:E6:9B:9B:D4:FF:88:F5:D8:5E:31:7E';
+        if (err.contains('client_id') || err.contains('google-services')) {
+          msg = 'Google Sign-In not configured. Register app in Google Cloud Console, then rebuild APK.';
+        } else if (err.contains('10:') || err.contains('SIGN_IN_FAILED') || err.contains('sign_in_failed')) {
+          msg = 'Google Sign-In failed (10). Ensure you have a Web client ID in Google Cloud Console (not just Android). Add your SHA-1 too:\n8D:C2:85:A5:25:20:47:DF:8B:E6:9B:9B:D4:FF:88:F5:D8:5E:31:7E';
+        } else if (err.contains('12500') || err.contains('12501')) {
+          msg = 'Google Sign-In cancelled or misconfigured. Create a Web client ID in Google Cloud Console — the Android client ID is not enough.';
+        } else if (err.contains('configuration') || err.contains('popup_closed')) {
+          msg = 'Google Sign-In popup was closed or not configured for this domain. Add this domain to authorized JavaScript origins in Google Cloud Console.';
+        } else if (err.contains('TimeoutException')) {
+          msg = 'Google Sign-In timed out. Please try again.';
         } else {
-          msg = 'Google Sign-In failed: $e';
+          msg = 'Google Sign-In error: $e';
         }
+        debugPrint('GoogleSignIn error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red, duration: const Duration(seconds: 5)),
         );
       }
     }

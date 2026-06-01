@@ -24,20 +24,18 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "django_filters",
-    "cloudinary_storage",
-    "cloudinary",
     "accounts",
     "intake",
     "payments",
     "consultations",
     "clinical",
     "notifications",
+    "realtime",
 ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -46,14 +44,26 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+try:
+    import whitenoise  # noqa
+    MIDDLEWARE.insert(3, "whitenoise.middleware.WhiteNoiseMiddleware")
+except ImportError:
+    pass
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+try:
+    import whitenoise  # noqa
+    STORAGES["staticfiles"]["BACKEND"] = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+except ImportError:
+    pass
 
 ROOT_URLCONF = "gara.urls"
 
@@ -124,6 +134,14 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# Rate limiting (in-memory, no Redis needed)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "gara-rate-limit",
+    }
+}
+
 CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:57758,https://gara-ew1z4rwbu-novblenas-projects.vercel.app"
 ).split(",")
@@ -148,10 +166,20 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Cloudinary (optional — for cloud file storage in production)
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL")
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET) and CLOUDINARY_URL:
+    import re as _re
+    _m = _re.match(r"cloudinary://(?P<key>[^:]+):(?P<secret>[^@]+)@(?P<name>[^/]+)", CLOUDINARY_URL)
+    if _m:
+        CLOUDINARY_CLOUD_NAME = _m.group("name")
+        CLOUDINARY_API_KEY = _m.group("key")
+        CLOUDINARY_API_SECRET = _m.group("secret")
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    INSTALLED_APPS.append("cloudinary")
+    INSTALLED_APPS.append("cloudinary_storage")
     CLOUDINARY_STORAGE = {
         "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
         "API_KEY": CLOUDINARY_API_KEY,
@@ -164,6 +192,9 @@ SESSION_COOKIE_SECURE = not (os.getenv("DEBUG", "True") == "True")
 CSRF_COOKIE_SECURE = not (os.getenv("DEBUG", "True") == "True")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Ably real-time
+ABLY_API_KEY = os.getenv("ABLY_API_KEY")
 
 # Gemini AI
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

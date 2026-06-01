@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
@@ -249,6 +250,67 @@ class AuthProvider extends ChangeNotifier {
     if (ApiService.isLoggedIn) {
       await _fetchUser();
       notifyListeners();
+    }
+  }
+
+  Future<bool> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
+    String? preferredLanguage,
+    String? dateOfBirth,
+    String? sex,
+    String? address,
+    String? licenseNumber,
+    String? specialization,
+    String? bio,
+    Uint8List? profilePictureBytes,
+  }) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final fields = <String, String>{};
+      if (firstName != null) fields['first_name'] = firstName;
+      if (lastName != null) fields['last_name'] = lastName;
+      if (phoneNumber != null) fields['phone_number'] = phoneNumber;
+      if (preferredLanguage != null) fields['preferred_language'] = preferredLanguage;
+      if (dateOfBirth != null) fields['date_of_birth'] = dateOfBirth;
+      if (sex != null) fields['sex'] = sex;
+      if (address != null) fields['address'] = address;
+      if (licenseNumber != null) fields['license_number'] = licenseNumber;
+      if (specialization != null) fields['specialization'] = specialization;
+      if (bio != null) fields['bio'] = bio;
+
+      Map<String, dynamic> data;
+      if (profilePictureBytes != null) {
+        data = await ApiService.uploadBytes(
+          ApiConfig.updateProfile,
+          bytes: profilePictureBytes,
+          fieldName: 'profile_picture',
+          filename: 'profile.jpg',
+          fields: fields.isEmpty ? null : fields,
+          method: 'PATCH',
+        );
+      } else {
+        data = await ApiService.patch(ApiConfig.updateProfile, body: fields);
+      }
+
+      _user = UserModel.fromJson(data);
+      _loading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _loading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = 'Connection error: $e';
+      _loading = false;
+      notifyListeners();
+      return false;
     }
   }
 

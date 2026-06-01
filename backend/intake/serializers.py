@@ -3,14 +3,20 @@ from .models import ClinicalIntake
 
 
 class ClinicalIntakeSerializer(serializers.ModelSerializer):
+    triage_priority = serializers.SerializerMethodField()
+
     class Meta:
         model = ClinicalIntake
         fields = [
             "id", "patient", "sex", "severity", "duration",
             "symptoms_description", "ai_clinical_summary",
-            "created_at", "updated_at", "is_submitted",
+            "created_at", "updated_at", "is_submitted", "triage_priority",
         ]
         read_only_fields = ["id", "patient", "ai_clinical_summary", "created_at", "updated_at"]
+
+    def get_triage_priority(self, obj):
+        from .ai_service import get_triage_priority
+        return get_triage_priority(obj.severity, obj.symptoms_description)
 
 
 class ClinicalIntakeCreateSerializer(serializers.ModelSerializer):

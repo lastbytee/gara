@@ -19,12 +19,14 @@ from .serializers import (
 )
 from .permissions import IsDoctor, IsPatient
 from .models import PatientProfile, DoctorProfile, PasswordResetCode
+from .rate_limit import rate_limit
 
 User = get_user_model()
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@rate_limit(max_requests=5, window_seconds=300)
 def register_patient(request):
     serializer = RegisterPatientSerializer(data=request.data)
     if serializer.is_valid():
@@ -43,6 +45,7 @@ def register_patient(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@rate_limit(max_requests=5, window_seconds=300)
 def register_doctor(request):
     serializer = RegisterDoctorSerializer(data=request.data)
     if serializer.is_valid():
@@ -59,19 +62,30 @@ def register_doctor(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET"])
-def me(request):
-    serializer = UserSerializer(request.user)
+def _serialize_profile(user):
+    serializer = UserSerializer(user)
     data = serializer.data
-    if request.user.role == "PATIENT":
-        profile = getattr(request.user, "patient_profile", None)
+    data["phone_number"] = user.phone_number
+    data["preferred_language"] = user.preferred_language
+    if user.role == "PATIENT":
+        profile = getattr(user, "patient_profile", None)
         data["date_of_birth"] = getattr(profile, "date_of_birth", None)
         data["sex"] = getattr(profile, "sex", None)
-    elif request.user.role == "DOCTOR":
-        profile = getattr(request.user, "doctor_profile", None)
+        data["profile_picture"] = (profile.profile_picture.url if profile and profile.profile_picture else None)
+        data["address"] = getattr(profile, "address", None)
+    elif user.role == "DOCTOR":
+        profile = getattr(user, "doctor_profile", None)
         data["license_number"] = getattr(profile, "license_number", None)
         data["specialization"] = getattr(profile, "specialization", None)
-    return Response(data)
+        data["profile_picture"] = (profile.profile_picture.url if profile and profile.profile_picture else None)
+        data["address"] = getattr(profile, "address", None)
+        data["bio"] = getattr(profile, "bio", None)
+    return data
+
+
+@api_view(["GET"])
+def me(request):
+    return Response(_serialize_profile(request.user))
 
 
 @api_view(["PATCH"])
@@ -82,15 +96,25 @@ def update_profile(request):
             setattr(user, field, request.data[field])
     user.save()
 
+    profile = None
     if user.role == "PATIENT":
         profile, _ = PatientProfile.objects.get_or_create(user=user)
-        if "date_of_birth" in request.data:
-            profile.date_of_birth = request.data["date_of_birth"]
-        if "sex" in request.data:
-            profile.sex = request.data["sex"]
+        for f in ["date_of_birth", "sex", "address"]:
+            if f in request.data:
+                setattr(profile, f, request.data[f])
+    elif user.role == "DOCTOR":
+        profile, _ = DoctorProfile.objects.get_or_create(user=user)
+        for f in ["license_number", "specialization", "address", "bio"]:
+            if f in request.data:
+                setattr(profile, f, request.data[f])
+
+    if "profile_picture" in request.FILES and profile is not None:
+        profile.profile_picture = request.FILES["profile_picture"]
+
+    if profile is not None:
         profile.save()
 
-    return Response(UserSerializer(user).data)
+    return Response(_serialize_profile(user))
 
 
 @api_view(["GET"])
@@ -107,6 +131,7 @@ def list_patients(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@rate_limit(max_requests=3, window_seconds=120)
 def password_reset_request(request):
     serializer = PasswordResetRequestSerializer(data=request.data)
     if not serializer.is_valid():
@@ -132,6 +157,7 @@ def password_reset_request(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@rate_limit(max_requests=5, window_seconds=120)
 def password_reset_confirm(request):
     serializer = PasswordResetConfirmSerializer(data=request.data)
     if not serializer.is_valid():
@@ -166,6 +192,7 @@ def password_reset_confirm(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@rate_limit(max_requests=5, window_seconds=120)
 def google_auth(request):
     serializer = GoogleAuthSerializer(data=request.data)
     if not serializer.is_valid():

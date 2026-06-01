@@ -8,6 +8,15 @@ class UserModel {
   final String role;
   final String preferredLanguage;
 
+  // Profile fields
+  final String? dateOfBirth;
+  final String? sex;
+  final String? profilePicture;
+  final String? address;
+  final String? licenseNumber;
+  final String? specialization;
+  final String? bio;
+
   UserModel({
     required this.id,
     required this.username,
@@ -17,6 +26,13 @@ class UserModel {
     this.phoneNumber,
     required this.role,
     this.preferredLanguage = 'en',
+    this.dateOfBirth,
+    this.sex,
+    this.profilePicture,
+    this.address,
+    this.licenseNumber,
+    this.specialization,
+    this.bio,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +45,13 @@ class UserModel {
       phoneNumber: json['phone_number'],
       role: json['role'] ?? 'PATIENT',
       preferredLanguage: json['preferred_language'] ?? 'en',
+      dateOfBirth: json['date_of_birth'],
+      sex: json['sex'],
+      profilePicture: json['profile_picture'],
+      address: json['address'],
+      licenseNumber: json['license_number'],
+      specialization: json['specialization'],
+      bio: json['bio'],
     );
   }
 

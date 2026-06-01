@@ -11,6 +11,7 @@ import '../../models/notification.dart';
 import 'queue_screen.dart';
 import 'consultation_screen.dart';
 import 'patient_list_screen.dart';
+import '../profile_screen.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
@@ -82,6 +83,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.logout),

@@ -187,12 +187,24 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
                   hintText: LocalizationService.translate(en: 'e.g., Headache, fever, body aches...', rw: 'Urugero: Umutwe, umuriro, kubabara umubiri...'),
                 ),
               ),
-              const SizedBox(height: 32),
               Consumer<IntakeProvider>(
-                builder: (_, intake, __) => LoadingButton(
-                  loading: intake.loading,
-                  label: LocalizationService.submitIntake,
-                  onPressed: _submit,
+                builder: (_, intake, __) => Column(
+                  children: [
+                    if (intake.error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          intake.error!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    LoadingButton(
+                      loading: intake.loading,
+                      label: LocalizationService.submitIntake,
+                      onPressed: _submit,
+                    ),
+                  ],
                 ),
               ),
             ],

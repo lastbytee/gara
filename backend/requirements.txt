@@ -12,3 +12,4 @@ Pillow==12.2.0
 python-dotenv==1.2.2
 google-auth==2.53.0
 google-generativeai==0.8.6
+ably==2.0.1

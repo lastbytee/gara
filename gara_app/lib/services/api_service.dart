@@ -69,8 +69,9 @@ class ApiService {
     String fieldName = 'file',
     String filename = 'upload',
     Map<String, String>? fields,
+    String method = 'POST',
   }) async {
-    final request = http.MultipartRequest('POST', _uri(path));
+    final request = http.MultipartRequest(method, _uri(path));
     if (_accessToken != null) {
       request.headers['Authorization'] = 'Bearer $_accessToken';
     }
@@ -80,7 +81,7 @@ class ApiService {
     }
     final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
     final response = await http.Response.fromStream(streamedResponse);
-    return _handle(response, 'POST', body: fields);
+    return _handle(response, method, body: fields);
   }
 
   static Future<Map<String, dynamic>> _handle(
@@ -88,15 +89,20 @@ class ApiService {
     String method, {
     Map<String, dynamic>? body,
   }) async {
-    final decoded = response.body.isNotEmpty
-        ? jsonDecode(response.body)
-        : <String, dynamic>{};
+    dynamic decoded;
+    try {
+      decoded = response.body.isNotEmpty
+          ? jsonDecode(response.body)
+          : <String, dynamic>{};
+    } catch (_) {
+      decoded = <String, dynamic>{'_raw': response.body.substring(0, response.body.length.clamp(0, 200))};
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (decoded is List) {
         return <String, dynamic>{'results': decoded};
       }
-      return decoded as Map<String, dynamic>;
+      return decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'results': decoded};
     }
 
     final data = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};

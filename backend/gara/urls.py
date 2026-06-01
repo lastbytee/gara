@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/consultations/", include("consultations.urls")),
     path("api/clinical/", include("clinical.urls")),
     path("api/notifications/", include("notifications.urls")),
+    path("api/realtime/", include("realtime.urls")),
 ]
 
 if settings.DEBUG:

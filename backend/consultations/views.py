@@ -16,8 +16,31 @@ from .serializers import (
 from accounts.permissions import IsDoctor
 from payments.models import Payment
 from notifications.models import Notification
-
 User = get_user_model()
+
+
+def _publish_consultation_message(*a, **kw):
+    try:
+        from realtime.ably_service import publish_consultation_message as f
+        f(*a, **kw)
+    except ImportError:
+        pass
+
+
+def _publish_consultation_status(*a, **kw):
+    try:
+        from realtime.ably_service import publish_consultation_status as f
+        f(*a, **kw)
+    except ImportError:
+        pass
+
+
+def _publish_user_notification(*a, **kw):
+    try:
+        from realtime.ably_service import publish_user_notification as f
+        f(*a, **kw)
+    except ImportError:
+        pass
 
 
 @api_view(["GET"])
@@ -142,6 +165,12 @@ def create_consultation(request):
             type=Notification.Type.CONSULTATION_CREATED,
             related_id=consultation.id,
         )
+        _publish_user_notification(patient.id, {
+            "title": "Consultation started",
+            "message": f"Dr. {request.user.get_full_name() or request.user.username} has started a consultation with you.",
+            "type": "CONSULTATION_CREATED",
+            "related_id": consultation.id,
+        })
 
         out = ConsultationSerializer(consultation)
         return Response(out.data, status=status.HTTP_201_CREATED)
@@ -188,7 +217,13 @@ def consultation_messages(request, consultation_id):
             {"detail": "Access denied."}, status=status.HTTP_403_FORBIDDEN
         )
 
+    after_id = request.query_params.get("after_id")
     messages = consultation.messages.all()
+    if after_id:
+        try:
+            messages = messages.filter(id__gt=int(after_id))
+        except ValueError:
+            pass
     serializer = MessageSerializer(messages, many=True)
     return Response(serializer.data)
 
@@ -228,8 +263,15 @@ def send_message(request, consultation_id):
             type=Notification.Type.MESSAGE_SENT,
             related_id=consultation.id,
         )
+        _publish_user_notification(recipient.id, {
+            "title": f"New message from {request.user.get_full_name() or request.user.username}",
+            "message": msg_preview,
+            "type": "MESSAGE_SENT",
+            "related_id": consultation.id,
+        })
 
         out = MessageSerializer(message)
+        _publish_consultation_message(consultation_id, out.data)
         return Response(out.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -260,4 +302,5 @@ def update_consultation_status(request, consultation_id):
         )
     consultation.save()
     serializer = ConsultationSerializer(consultation)
+    _publish_consultation_status(consultation_id, serializer.data)
     return Response(serializer.data)

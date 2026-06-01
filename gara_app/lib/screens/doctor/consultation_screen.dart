@@ -43,12 +43,15 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ConsultationProvider>().fetchMessages(widget.consultation.id);
+      final prov = context.read<ConsultationProvider>();
+      prov.fetchMessages(widget.consultation.id);
+      prov.startPolling(widget.consultation.id);
     });
   }
 
   @override
   void dispose() {
+    context.read<ConsultationProvider>().stopPolling();
     _textCtl.dispose();
     _scrollCtl.dispose();
     _recordTimer?.cancel();

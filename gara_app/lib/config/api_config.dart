@@ -46,6 +46,19 @@ class ApiConfig {
   static const String passwordResetConfirm = '/auth/password-reset/confirm/';
   static const String googleAuth = '/auth/google/';
 
-  // Google OAuth - from Google Cloud Console (Web client ID used for Android token verification)
-  static const String googleClientId = '454865273682-u8o73fe3u5u3ob1tcngk0jkemjjff2a6.apps.googleusercontent.com';
+  // Real-time
+  static const String ablyToken = '/realtime/token/';
+
+  // Google OAuth
+  // On Android: this should be a Google Cloud Web client ID (NOT Android client ID).
+  // The Web client ID is what gets sent to your backend for verification.
+  // The Android client ID (with SHA-1) goes in android/app/src/main/res/values/strings.xml as default_web_client_id.
+  // If you don't have a Web client ID, create one:
+  //   Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → Web application
+  static const String googleClientId = '782011715209-2p1b2og72drkhcpqrnbq5rt9jqts13iu.apps.googleusercontent.com';
+  // Web client ID for Flutter web (same as above, but must be a Web application type in Google Cloud Console)
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '782011715209-2p1b2og72drkhcpqrnbq5rt9jqts13iu.apps.googleusercontent.com',
+  );
 }

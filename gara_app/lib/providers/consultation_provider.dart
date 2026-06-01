@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/consultation.dart';
 import '../services/api_service.dart';
 import '../services/encryption_service.dart';
+import '../services/ably_service.dart';
 import '../config/api_config.dart';
 
 class ConsultationProvider extends ChangeNotifier {
@@ -11,6 +13,8 @@ class ConsultationProvider extends ChangeNotifier {
   List<MessageModel> _messages = [];
   ConsultationModel? _currentConsultation;
   bool _loading = false;
+  Timer? _pollTimer;
+  int _lastMessageId = 0;
 
   List<ConsultationModel> get consultations => _consultations;
   List<MessageModel> get messages => _messages;
@@ -25,6 +29,43 @@ class ConsultationProvider extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Start polling for new messages every 3 seconds
+  void startPolling(int consultationId) {
+    _lastMessageId = _messages.isNotEmpty ? _messages.last.id : 0;
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _pollNewMessages(consultationId);
+    });
+  }
+
+  void stopPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  Future<void> _pollNewMessages(int consultationId) async {
+    try {
+      final data = await ApiService.get('${ApiConfig.consultationMessages(consultationId)}?after_id=$_lastMessageId');
+      final newMessages = (data['results'] as List? ?? [])
+          .map((e) {
+            final msg = e as Map<String, dynamic>;
+            if (msg['message_type'] == 'TEXT' && msg['text_content'] != null) {
+              msg['text_content'] = EncryptionService.decrypt(msg['text_content'], consultationId);
+            }
+            return MessageModel.fromJson(msg);
+          })
+          .toList();
+      if (newMessages.isNotEmpty) {
+        _messages.addAll(newMessages);
+        _lastMessageId = newMessages.last.id;
+        notifyListeners();
+        for (final msg in newMessages) {
+          AblyService.fire('consultation:$consultationId', msg.toJson());
+        }
+      }
+    } catch (_) {}
   }
 
   Future<bool> createConsultation(int patientId, {int? intakeId}) async {
@@ -75,6 +116,9 @@ class ConsultationProvider extends ChangeNotifier {
             return MessageModel.fromJson(msg);
           })
           .toList();
+      if (_messages.isNotEmpty) {
+        _lastMessageId = _messages.last.id;
+      }
     } catch (_) {}
     _loading = false;
     notifyListeners();
@@ -88,6 +132,7 @@ class ConsultationProvider extends ChangeNotifier {
         'text_content': encrypted,
       });
       _messages.add(MessageModel.fromJson(data));
+      _lastMessageId = data['id'] ?? _lastMessageId;
       notifyListeners();
       return true;
     } catch (e) {
@@ -106,6 +151,7 @@ class ConsultationProvider extends ChangeNotifier {
         fields: {'message_type': 'AUDIO'},
       );
       _messages.add(MessageModel.fromJson(data));
+      _lastMessageId = data['id'] ?? _lastMessageId;
       notifyListeners();
       return true;
     } catch (e) {
@@ -123,6 +169,7 @@ class ConsultationProvider extends ChangeNotifier {
         fields: {'message_type': 'AUDIO'},
       );
       _messages.add(MessageModel.fromJson(data));
+      _lastMessageId = data['id'] ?? _lastMessageId;
       notifyListeners();
       return true;
     } catch (e) {
@@ -140,6 +187,7 @@ class ConsultationProvider extends ChangeNotifier {
         fields: {'message_type': 'IMAGE'},
       );
       _messages.add(MessageModel.fromJson(data));
+      _lastMessageId = data['id'] ?? _lastMessageId;
       notifyListeners();
       return true;
     } catch (e) {
@@ -176,4 +224,10 @@ class ConsultationProvider extends ChangeNotifier {
 
   List<ConsultationModel> get activeConsultations =>
       _consultations.where((c) => c.isActive).toList();
+
+  @override
+  void dispose() {
+    stopPolling();
+    super.dispose();
+  }
 }

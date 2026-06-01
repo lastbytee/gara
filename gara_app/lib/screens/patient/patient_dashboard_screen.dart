@@ -17,6 +17,7 @@ import '../../services/localization_service.dart';
 import 'payment_screen.dart';
 import 'my_prescriptions_screen.dart';
 import 'my_referrals_screen.dart';
+import '../profile_screen.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   const PatientDashboardScreen({super.key});
@@ -100,6 +101,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                   ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
