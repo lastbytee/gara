@@ -178,14 +178,22 @@ if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET) 
         CLOUDINARY_API_KEY = _m.group("key")
         CLOUDINARY_API_SECRET = _m.group("secret")
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-    INSTALLED_APPS.append("cloudinary")
-    INSTALLED_APPS.append("cloudinary_storage")
-    CLOUDINARY_STORAGE = {
-        "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
-        "API_KEY": CLOUDINARY_API_KEY,
-        "API_SECRET": CLOUDINARY_API_SECRET,
-    }
-    STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    _cloudinary_ok = False
+    try:
+        import cloudinary  # noqa
+        import cloudinary_storage  # noqa
+        _cloudinary_ok = True
+    except ImportError:
+        pass
+    if _cloudinary_ok:
+        INSTALLED_APPS.append("cloudinary")
+        INSTALLED_APPS.append("cloudinary_storage")
+        CLOUDINARY_STORAGE = {
+            "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+            "API_KEY": CLOUDINARY_API_KEY,
+            "API_SECRET": CLOUDINARY_API_SECRET,
+        }
+        STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = not (os.getenv("DEBUG", "True") == "True")
