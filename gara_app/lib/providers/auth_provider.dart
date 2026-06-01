@@ -149,34 +149,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> googleSignIn(String idToken, {String? preferredLanguage}) async {
-    _loading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final data = await ApiService.post(ApiConfig.googleAuth, body: {
-        'id_token': idToken,
-        if (preferredLanguage != null) 'preferred_language': preferredLanguage,
-      });
-      await ApiService.saveTokens(data['access'], data['refresh']);
-      _user = UserModel.fromJson(data['user']);
-      _loading = false;
-      notifyListeners();
-      return true;
-    } on ApiException catch (e) {
-      _error = e.message;
-      _loading = false;
-      notifyListeners();
-      return false;
-    } catch (e) {
-      _error = 'Connection error: $e';
-      _loading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
   Future<bool> forgotPassword(String email) async {
     _loading = true;
     _error = null;

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../models/consultation.dart';
 import '../services/api_service.dart';
 import '../services/encryption_service.dart';
-import '../services/ably_service.dart';
 import '../config/api_config.dart';
 
 class ConsultationProvider extends ChangeNotifier {
@@ -61,9 +60,6 @@ class ConsultationProvider extends ChangeNotifier {
         _messages.addAll(newMessages);
         _lastMessageId = newMessages.last.id;
         notifyListeners();
-        for (final msg in newMessages) {
-          AblyService.fire('consultation:$consultationId', msg.toJson());
-        }
       }
     } catch (_) {}
   }

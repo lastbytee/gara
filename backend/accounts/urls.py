@@ -12,5 +12,4 @@ urlpatterns = [
     path("patients/", views.list_patients, name="list-patients"),
     path("password-reset/", views.password_reset_request, name="password-reset"),
     path("password-reset/confirm/", views.password_reset_confirm, name="password-reset-confirm"),
-    path("google/", views.google_auth, name="google-auth"),
 ]

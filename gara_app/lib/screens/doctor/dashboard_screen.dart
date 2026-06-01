@@ -556,6 +556,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     if (relatedId == null) return;
     if (n.type == 'PAYMENT_SUBMITTED') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentQueueScreen()));
+    } else if (n.type == 'NEW_PATIENT') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const PatientListScreen()));
     } else {
       Navigator.push(
         context,
@@ -587,6 +589,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         return Icons.medication;
       case 'REFERRAL_ADDED':
         return Icons.transfer_within_a_station;
+      case 'NEW_PATIENT':
+        return Icons.person_add;
       default:
         return Icons.notifications;
     }

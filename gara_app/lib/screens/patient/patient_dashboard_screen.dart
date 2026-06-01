@@ -18,6 +18,8 @@ import 'payment_screen.dart';
 import 'my_prescriptions_screen.dart';
 import 'my_referrals_screen.dart';
 import '../profile_screen.dart';
+import '../../providers/intake_provider.dart';
+import '../../models/intake.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   const PatientDashboardScreen({super.key});
@@ -50,6 +52,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
       dash.fetchStats(),
       dash.fetchNotifications(),
       context.read<ConsultationProvider>().fetchMyConsultations(),
+      context.read<IntakeProvider>().fetchMyIntakes(),
     ]);
     _fetchMyData();
   }
@@ -126,6 +129,30 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
               _greeting(),
               const SizedBox(height: 20),
               _quickActions(),
+              const SizedBox(height: 24),
+              _sectionTitle(LocalizationService.translate(en: 'My Intakes', rw: 'Intake zanjye')),
+              const SizedBox(height: 8),
+              Consumer<IntakeProvider>(
+                builder: (_, ip, __) {
+                  if (ip.loading && ip.intakes.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (ip.intakes.isEmpty) {
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(LocalizationService.translate(en: 'No intakes yet. Submit your first one!', rw: 'Nta intake biracyari. Ohereza intake ya mbere!'),
+                          style: const TextStyle(color: GaraTheme.textSecondary),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
+                  return Column(
+                    children: ip.intakes.take(5).map((i) => _intakeTile(i)).toList(),
+                  );
+                },
+              ),
               const SizedBox(height: 24),
               _sectionTitle(LocalizationService.translate(en: 'My Consultations', rw: 'Ijyanama zanjye')),
               const SizedBox(height: 8),
@@ -218,10 +245,22 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
         })),
         const SizedBox(width: 12),
         Expanded(child: _actionCard(Icons.payment, LocalizationService.makePayment, LocalizationService.forConsultation, GaraTheme.accent, () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()));
+          _navigateToUnpaidIntakes();
         })),
       ],
     );
+  }
+
+  void _navigateToUnpaidIntakes() {
+    final intakes = context.read<IntakeProvider>().intakes;
+    final unpaid = intakes.where((i) => !i.hasPaid).toList();
+    if (unpaid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(LocalizationService.translate(en: 'No unpaid intakes. Submit a new one first.', rw: 'Nta intake zishyuwe. Ohereza intake nshya.')), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentScreen(intakeId: unpaid.first.id)));
   }
 
   Widget _actionCard(IconData icon, String label, String subtitle, Color color, VoidCallback onTap) {
@@ -253,6 +292,27 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(child: Text(text, style: const TextStyle(color: GaraTheme.textSecondary))),
+      ),
+    );
+  }
+
+  Widget _intakeTile(IntakeModel intake) {
+    final isPaid = intake.hasPaid;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isPaid ? Colors.green.withAlpha(25) : GaraTheme.warning.withAlpha(25),
+          child: Icon(isPaid ? Icons.check_circle : Icons.hourglass_empty, color: isPaid ? Colors.green : GaraTheme.warning, size: 20),
+        ),
+        title: Text('${intake.severity ?? 'Intake'} - ${intake.createdAt.split('T')[0]}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        subtitle: Text(intake.symptomsDescription ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+        trailing: isPaid
+            ? const Icon(Icons.check, color: Colors.green, size: 20)
+            : TextButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentScreen(intakeId: intake.id))),
+                child: Text(LocalizationService.translate(en: 'Pay Now', rw: 'Is hyura'), style: const TextStyle(fontSize: 12, color: GaraTheme.primaryBlue)),
+              ),
       ),
     );
   }

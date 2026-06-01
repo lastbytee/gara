@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     "consultations",
     "clinical",
     "notifications",
-    "realtime",
 ]
 
 MIDDLEWARE = [
@@ -165,52 +164,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Cloudinary (opt-in: set USE_CLOUDINARY=True + credentials to enable)
-# PythonAnywhere free tier may block outbound to Cloudinary — local storage is default.
-if os.getenv("USE_CLOUDINARY", "").lower() in ("true", "1", "yes"):
-    CLOUDINARY_URL = os.getenv("CLOUDINARY_URL")
-    CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
-    CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
-    CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
-    if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET) and CLOUDINARY_URL:
-        import re as _re
-        _m = _re.match(r"cloudinary://(?P<key>[^:]+):(?P<secret>[^@]+)@(?P<name>[^/]+)", CLOUDINARY_URL)
-        if _m:
-            CLOUDINARY_CLOUD_NAME = _m.group("name")
-            CLOUDINARY_API_KEY = _m.group("key")
-            CLOUDINARY_API_SECRET = _m.group("secret")
-    if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-        _cloudinary_ok = False
-        try:
-            import cloudinary  # noqa
-            import cloudinary_storage  # noqa
-            _cloudinary_ok = True
-        except ImportError:
-            pass
-        if _cloudinary_ok:
-            INSTALLED_APPS.append("cloudinary")
-            INSTALLED_APPS.append("cloudinary_storage")
-            CLOUDINARY_STORAGE = {
-                "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
-                "API_KEY": CLOUDINARY_API_KEY,
-                "API_SECRET": CLOUDINARY_API_SECRET,
-            }
-            STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
-
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = not (os.getenv("DEBUG", "True") == "True")
 CSRF_COOKIE_SECURE = not (os.getenv("DEBUG", "True") == "True")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Ably real-time
-ABLY_API_KEY = os.getenv("ABLY_API_KEY")
-
 # Gemini AI
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-# Google OAuth (for Sign-In)
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 
 # Doctor Registration Token
 DOCTOR_REGISTRATION_TOKEN = os.getenv(

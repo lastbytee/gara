@@ -3,6 +3,13 @@ from django.conf import settings
 
 
 class Payment(models.Model):
+    intake = models.ForeignKey(
+        "intake.ClinicalIntake",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments",
+    )
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         APPROVED = "APPROVED", "Approved"

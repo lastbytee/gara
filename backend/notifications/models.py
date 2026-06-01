@@ -11,6 +11,7 @@ class Notification(models.Model):
         MESSAGE_SENT = "MESSAGE_SENT", "Message Sent"
         PRESCRIPTION_ADDED = "PRESCRIPTION_ADDED", "Prescription Added"
         REFERRAL_ADDED = "REFERRAL_ADDED", "Referral Added"
+        NEW_PATIENT = "NEW_PATIENT", "New Patient Registered"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,

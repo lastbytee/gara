@@ -52,17 +52,11 @@ class LocalizationService {
   // ── Auth ──
   static String get rememberMe => translate(en: 'Remember Me', rw: 'Nunvikire');
   static String get forgotPassword => translate(en: 'Forgot Password?', rw: 'Wibagiwe ijambo ry\'ibanga?');
-  static String get orContinueWith => translate(en: 'Or continue with', rw: 'Cyangwa ukomeze ukoresheje');
-  static String get continueWithGoogle => translate(en: 'Continue with Google', rw: 'Komeza na Google');
   static String get registerAsDoctor => translate(en: 'Register as Doctor', rw: 'Iyandikishe nk\'umuganga');
   static String get registerAsPatient => translate(en: 'Register as Patient', rw: 'Iyandikishe nk\'umurwayi');
   static String get alreadyHaveAccount => translate(en: 'Already have an account? Login', rw: 'Ufite konti? Injira');
   static String get newPatientRegister => translate(en: 'New Patient? Register here', rw: 'Umurwayi mushya? Iyandikishe hano');
   static String get doctorLabel => translate(en: 'Doctor?', rw: 'Muganga?');
-  static String get allUsersLogin => translate(
-    en: 'All users (Patients & Doctors) login here',
-    rw: 'Abakoresha bose (Abarwayi n\'abaganga) injira hano',
-  );
   static String get passwordStrength => translate(en: 'Password Strength', rw: 'Ubukomeye bw\'ijambo ry\'ibanga');
   static String get weak => translate(en: 'Weak', rw: 'Rwoshye');
   static String get medium => translate(en: 'Medium', rw: 'Rwagati');
@@ -83,7 +77,6 @@ class LocalizationService {
   static String get resetPassword => translate(en: 'Reset Password', rw: 'Tunganya ijambo ry\'ibanga');
   static String get passwordResetSuccess => translate(en: 'Password reset successfully!', rw: 'Ijambo ry\'ibanga ryatunganyijwe!');
   static String get invalidResetCode => translate(en: 'Invalid or expired reset code.', rw: 'Kode ntabwo ikora cyangwa yarangiye.');
-  static String get googleSignInFailed => translate(en: 'Google Sign-In failed', rw: 'Kwinjira na Google byananiwe');
 
   // ── Roles ──
   static String get patient => translate(en: 'Patient', rw: 'Umurwayi');

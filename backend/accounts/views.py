@@ -7,15 +7,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
 from .serializers import (
     RegisterPatientSerializer,
     RegisterDoctorSerializer,
     UserSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
-    GoogleAuthSerializer,
 )
 from .permissions import IsDoctor, IsPatient
 from .models import PatientProfile, DoctorProfile, PasswordResetCode
@@ -32,6 +29,22 @@ def register_patient(request):
     if serializer.is_valid():
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
+
+        # Notify all doctors about new patient
+        try:
+            from notifications.models import Notification
+            doctors = User.objects.filter(role="DOCTOR")
+            for doctor in doctors:
+                Notification.objects.create(
+                    recipient=doctor,
+                    title="New patient registered",
+                    message=f"{user.get_full_name() or user.username} has joined Gara as a patient.",
+                    type=Notification.Type.NEW_PATIENT,
+                    related_id=user.id,
+                )
+        except Exception:
+            pass
+
         return Response(
             {
                 "user": UserSerializer(user).data,
@@ -192,65 +205,4 @@ def password_reset_confirm(request):
                     status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-@rate_limit(max_requests=5, window_seconds=120)
-def google_auth(request):
-    serializer = GoogleAuthSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    id_token_str = serializer.validated_data["id_token"]
-
-    try:
-        from django.conf import settings
-        client_id = settings.GOOGLE_OAUTH_CLIENT_ID or None
-        info = id_token.verify_oauth2_token(id_token_str, google_requests.Request(), audience=client_id)
-        if info.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
-            return Response({"detail": "Invalid token issuer."},
-                            status=status.HTTP_400_BAD_REQUEST)
-    except ValueError:
-        return Response({"detail": "Invalid or expired token."},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    email = info.get("email")
-    if not email:
-        return Response({"detail": "Email not provided by Google."},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    given_name = info.get("given_name", "")
-    family_name = info.get("family_name", "")
-    google_sub = info.get("sub", "")
-
-    user = User.objects.filter(email=email).first()
-
-    if not user:
-        # Create new user
-        username = email.split("@")[0]
-        base_username = username
-        counter = 1
-        while User.objects.filter(username=username).exists():
-            username = f"{base_username}{counter}"
-            counter += 1
-
-        user = User.objects.create(
-            username=username,
-            email=email,
-            first_name=given_name,
-            last_name=family_name,
-            role=User.Role.PATIENT,
-        )
-        user.set_password(User.objects.make_random_password())
-        user.save()
-
-        PatientProfile.objects.create(user=user)
-
-    refresh = RefreshToken.for_user(user)
-    return Response(
-        {
-            "user": UserSerializer(user).data,
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-        },
-        status=status.HTTP_200_OK,
-    )

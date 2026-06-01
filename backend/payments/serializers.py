@@ -38,9 +38,18 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
         fields = ["amount", "screenshot", "sender_phone", "intake_id"]
 
     def create(self, validated_data):
-        validated_data.pop("intake_id", None)
+        intake_id = validated_data.pop("intake_id", None)
         patient = self.context["request"].user
-        return Payment.objects.create(patient=patient, **validated_data)
+        payment = Payment.objects.create(patient=patient, **validated_data)
+        if intake_id:
+            try:
+                from intake.models import ClinicalIntake
+                intake = ClinicalIntake.objects.get(id=intake_id, patient=patient)
+                payment.intake = intake
+                payment.save()
+            except ClinicalIntake.DoesNotExist:
+                pass
+        return payment
 
 
 class PaymentReviewSerializer(serializers.Serializer):

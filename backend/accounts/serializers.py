@@ -145,6 +145,3 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({"confirm_new_password": "Passwords do not match."})
         return attrs
 
-
-class GoogleAuthSerializer(serializers.Serializer):
-    id_token = serializers.CharField()

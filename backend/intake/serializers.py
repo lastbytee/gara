@@ -16,6 +16,7 @@ class ClinicalIntakeSerializer(serializers.ModelSerializer):
             "sex", "severity", "duration",
             "symptoms_description", "ai_clinical_summary",
             "created_at", "updated_at", "is_submitted", "triage_priority",
+            "payment_status",
         ]
         read_only_fields = ["id", "patient", "ai_clinical_summary", "created_at", "updated_at"]
 
@@ -39,6 +40,14 @@ class ClinicalIntakeSerializer(serializers.ModelSerializer):
     def get_triage_priority(self, obj):
         from .ai_service import get_triage_priority
         return get_triage_priority(obj.severity, obj.symptoms_description)
+
+    def get_payment_status(self, obj):
+        payment = obj.payments.first()
+        if not payment:
+            return "none"
+        return payment.status.lower()
+
+    payment_status = serializers.SerializerMethodField()
 
 
 class ClinicalIntakeCreateSerializer(serializers.ModelSerializer):
