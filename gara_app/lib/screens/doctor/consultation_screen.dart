@@ -512,7 +512,7 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
   }
 
   Widget _buildImageMessage(String imageUrl, bool isMe) {
-    final fullUrl = '${ApiConfig.baseUrl.replaceAll('/api', '')}/$imageUrl';
+    final fullUrl = '${ApiConfig.baseUrl.replaceAll('/api', '')}media/$imageUrl';
     return GestureDetector(
       onTap: () => showDialog(
         context: context,
@@ -543,7 +543,7 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
           await _audioPlayer.stop();
           setState(() => _playingMessageId = null);
         } else if (msg.audioFile != null) {
-          final url = '${ApiConfig.baseUrl.replaceAll('/api', '')}/${msg.audioFile}';
+          final url = '${ApiConfig.baseUrl.replaceAll('/api', '')}media/${msg.audioFile}';
           await _audioPlayer.stop();
           await _audioPlayer.play(UrlSource(url));
           setState(() => _playingMessageId = msg.id);

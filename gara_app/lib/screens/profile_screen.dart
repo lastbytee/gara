@@ -107,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundImage: (_newPictureBytes != null)
                       ? MemoryImage(_newPictureBytes!) as ImageProvider
                       : ((user?.profilePicture != null)
-                          ? NetworkImage('${ApiConfig.baseUrl.replaceAll('/api', '')}${user!.profilePicture!}')
+                          ? NetworkImage('${ApiConfig.baseUrl.replaceAll('/api', '')}media/${user!.profilePicture!}')
                           : null),
                   child: _newPictureBytes == null && user?.profilePicture == null
                       ? const Icon(Icons.camera_alt, size: 32)

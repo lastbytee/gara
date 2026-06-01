@@ -303,61 +303,56 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         ),
         const SizedBox(height: 12),
         // Stat cards: Patients, Completed, In Progress, Pending
-        Row(
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: 2.8,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
           children: [
-            Expanded(
-              child: _statCard(
-                Icons.people,
-                LocalizationService.patients,
-                '${stats.totalPatients}',
-                GaraTheme.primaryBlue,
-                badge: _changeBadge(stats.patientChange),
-                onTap: () => Navigator.push(
+            _statCard(
+              Icons.people,
+              LocalizationService.patients,
+              '${stats.totalPatients}',
+              GaraTheme.primaryBlue,
+              badge: _changeBadge(stats.patientChange),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PatientListScreen()),
+              ),
+            ),
+            _statCard(
+              Icons.check_circle,
+              LocalizationService.completed,
+              '${stats.completedConsultations}',
+              GaraTheme.accent,
+              onTap: () => _navigateToConsultationList(context, activeOnly: false),
+            ),
+            _statCard(
+              Icons.chat_bubble,
+              LocalizationService.inProgress,
+              '${stats.inProgressConsultations}',
+              GaraTheme.warning,
+              onTap: () {
+                final cons = context.read<ConsultationProvider>();
+                final active = cons.activeConsultations;
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const PatientListScreen()),
-                ),
-              ),
+                  MaterialPageRoute(
+                    builder: (_) => ConsultationListScreen(filteredList: active, title: LocalizationService.activeConsultations),
+                  ),
+                );
+              },
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _statCard(
-                Icons.check_circle,
-                LocalizationService.completed,
-                '${stats.completedConsultations}',
-                GaraTheme.accent,
-                onTap: () => _navigateToConsultationList(context, activeOnly: false),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _statCard(
-                Icons.chat_bubble,
-                LocalizationService.inProgress,
-                '${stats.inProgressConsultations}',
-                GaraTheme.warning,
-                onTap: () {
-                  final cons = context.read<ConsultationProvider>();
-                  final active = cons.activeConsultations;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ConsultationListScreen(filteredList: active, title: LocalizationService.activeConsultations),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _statCard(
-                Icons.pending_actions,
-                LocalizationService.pending,
-                '${stats.pendingPayments}',
-                Colors.red,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PaymentQueueScreen()),
-                ),
+            _statCard(
+              Icons.pending_actions,
+              LocalizationService.pending,
+              '${stats.pendingPayments}',
+              Colors.red,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PaymentQueueScreen()),
               ),
             ),
           ],
