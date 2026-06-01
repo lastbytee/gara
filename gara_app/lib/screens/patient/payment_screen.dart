@@ -100,6 +100,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       );
       Navigator.pop(context);
+    } else if (mounted && payment.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(payment.error!),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 
