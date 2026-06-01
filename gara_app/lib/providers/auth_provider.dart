@@ -270,6 +270,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _user = UserModel.fromJson(data);
+      await _fetchUser();
       _loading = false;
       notifyListeners();
       return true;
