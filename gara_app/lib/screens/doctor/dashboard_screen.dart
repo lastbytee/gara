@@ -307,7 +307,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 2.8,
+          childAspectRatio: 1.3,
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           children: [

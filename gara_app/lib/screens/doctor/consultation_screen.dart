@@ -73,7 +73,7 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final picked = await _picker.pickImage(source: ImageSource.gallery);
+      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
       final success = await context.read<ConsultationProvider>().sendImageMessage(
@@ -107,7 +107,7 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
       return;
     }
     try {
-      final picked = await _picker.pickImage(source: ImageSource.camera);
+      final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 75);
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
       final success = await context.read<ConsultationProvider>().sendImageMessage(
@@ -512,7 +512,7 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
   }
 
   Widget _buildImageMessage(String imageUrl, bool isMe) {
-    final fullUrl = '${ApiConfig.baseUrl.replaceAll('/api', '')}media/$imageUrl';
+    final fullUrl = '${ApiConfig.baseUrl.replaceAll('/api', '')}$imageUrl';
     return GestureDetector(
       onTap: () => showDialog(
         context: context,
@@ -543,7 +543,7 @@ class _ConsultationChatScreenState extends State<ConsultationChatScreen> {
           await _audioPlayer.stop();
           setState(() => _playingMessageId = null);
         } else if (msg.audioFile != null) {
-          final url = '${ApiConfig.baseUrl.replaceAll('/api', '')}media/${msg.audioFile}';
+          final url = '${ApiConfig.baseUrl.replaceAll('/api', '')}${msg.audioFile}';
           await _audioPlayer.stop();
           await _audioPlayer.play(UrlSource(url));
           setState(() => _playingMessageId = msg.id);

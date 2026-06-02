@@ -22,7 +22,7 @@ class PatientQueueCard extends StatelessWidget {
       );
       return;
     }
-    final url = '${ApiConfig.baseUrl.replaceAll('/api', '')}media/${payment.screenshot}';
+    final url = '${ApiConfig.baseUrl.replaceAll('/api', '')}${payment.screenshot}';
     showDialog(
       context: context,
       builder: (_) => Dialog(
